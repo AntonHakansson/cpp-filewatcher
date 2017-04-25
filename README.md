@@ -1,7 +1,17 @@
 # cpp-filewatcher
 Lightweight modern c++11 file listener for linux os
 
+# Build
+```sh
 
+mkdir build
+cd build
+cmake ..
+make
+
+```
+
+# Example usage
 ```c++
 
 
@@ -10,10 +20,11 @@ Lightweight modern c++11 file listener for linux os
 
 #include "../include/FileWatcher.hpp"
 
-// 1) create directory "dir" in same directory as main.cpp
-// 2) Compile with:
+// 1) Build lib 
+// 2) Create directory "dir" in same directory as main.cpp
+// 3) Compile sample program with:
 //     g++ main.cpp -L../build -lcpp-filewatcher -o sample.out
-// 3) Make edits to dir directory to watch changes
+// 4) Make edits to dir directory to watch changes
 
 void callback(FW::WatchId, std::string dir, std::string f, FW::Action action) {
   std::cout << dir << "/" << f << " " << (int)action <<  std::endl;
