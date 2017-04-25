@@ -1,5 +1,5 @@
 # cpp-filewatcher
-Lightweight modern c++11 file listener for linux os
+Lightweight modern c++11 file listener for GNU/linux os
 
 # Build
 ```sh
@@ -54,5 +54,8 @@ int main() {
   return 0;
 }
 
-
 ```
+# TODO
+- Cross-platform support
+- Replace update with thread(?)
+- Properly test functionality
