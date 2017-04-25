@@ -27,7 +27,19 @@ make
 // 4) Make edits to dir directory to watch changes
 
 void callback(FW::WatchId, std::string dir, std::string f, FW::Action action) {
-  std::cout << dir << "/" << f << " " << (int)action <<  std::endl;
+  switch(action) {
+    case FW::Action::Add:
+       std::cout << "File (" << dir + "\\" + filename << ") Added! " <<  std::endl;
+       break;
+    case FW::Action::Delete:
+       std::cout << "File (" << dir + "\\" + filename << ") Deleted! " << std::endl;
+       break;
+    case FW::Action::Modified:
+       std::cout << "File (" << dir + "\\" + filename << ") Modified! " << std::endl;
+       break;
+    default:
+       std::cout << "Should never happen!" << std::endl;
+  }
 }
 
 int main() {
