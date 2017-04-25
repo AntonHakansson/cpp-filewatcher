@@ -26,7 +26,7 @@ make
 //     g++ main.cpp -L../build -lcpp-filewatcher -o sample.out
 // 4) Make edits to dir directory to watch changes
 
-void callback(FW::WatchId, std::string dir, std::string f, FW::Action action) {
+void callback(FW::WatchId watch_id, std::string dir, std::string filename, FW::Action action) {
   switch(action) {
     case FW::Action::Add:
        std::cout << "File (" << dir + "\\" + filename << ") Added! " <<  std::endl;
