@@ -1,9 +1,7 @@
 #include <FileWatcher.hpp>
 
 namespace FW {
-  FileWatcher::FileWatcher (std::chrono::milliseconds update_delay) {
-    m_update_delay = update_delay;
-
+  FileWatcher::FileWatcher () {
     m_fd = inotify_init();
     if (m_fd < 0)
       std::cout << "FileWatch Error: " << errno << std::endl;

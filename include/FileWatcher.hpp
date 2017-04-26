@@ -55,7 +55,7 @@ namespace FW {
 
   class FileWatcher {
   public:
-    FileWatcher (std::chrono::milliseconds update_delay = 500ms);
+    FileWatcher ();
     virtual ~FileWatcher ();
 
     WatchId add_watch (const String& directory, const Callback& callback);
