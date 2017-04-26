@@ -1,13 +1,24 @@
 #include <FileWatcher.hpp>
 
 namespace FW {
-  FileWatcher::FileWatcher () {
+  FileWatcher::FileWatcher (std::chrono::milliseconds update_delay) {
+    m_update_delay = update_delay;
+
     m_fd = inotify_init();
     if (m_fd < 0)
       std::cout << "FileWatch Error: " << errno << std::endl;
+
+    int flags = fcntl(m_fd, F_GETFL, 0);
+    fcntl(m_fd, F_SETFL, flags | O_NONBLOCK);
   }
 
   FileWatcher::~FileWatcher () {
+    auto iter = m_watches.begin();
+    auto end = m_watches.end();
+    for (; iter != end; ++iter) {
+      remove_watch(iter->first);
+    }
+
     m_watches.clear();
     close (m_fd);
   }
@@ -20,7 +31,7 @@ namespace FW {
       if (errno == ENOENT)
         std::cout << "FileWatch directory not found: "  << directory.c_str() << errno << std::endl;
       else
-        std::cout << "FileWatch Error: " << errno << std::endl;
+        perror("Directory");
     }
 
     m_watches.insert( {wd, {callback, directory}} );
@@ -49,22 +60,37 @@ namespace FW {
   }
 
   void FileWatcher::update () {
+    if (std::chrono::duration_cast<std::chrono::duration<float>>(
+            std::chrono::system_clock::now() - m_prev_update) <
+        m_update_delay) {
+          return;
+    }
+
     static char buffer[BUF_LEN];
 
     int length = read(m_fd, buffer, BUF_LEN);
     int i = 0;
 
+    if ( length < 0 && errno == EAGAIN)
+      return; // This means there is no data to be read
+
     if ( length < 0 ) {
       perror( "read" );
+      return;
     }
 
     while (i < length) {
       struct inotify_event *event = ( struct inotify_event * ) &buffer[ i ];
+
       WatchId id = event->wd;
-      handle_action (id, event->name, event->mask);
+      const String& filename = event->name;
+      auto event_mask = event->mask;
+
+      handle_action (id, filename, event_mask);
       i += EVENT_SIZE + event->len;
     }
 
+    m_prev_update = std::chrono::system_clock::now();
   }
 
   void FileWatcher::handle_action(WatchId watch_id, const String &filename, unsigned long action) {

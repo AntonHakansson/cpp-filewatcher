@@ -19,6 +19,7 @@
 #include <string>
 #include <map>
 #include <functional>
+#include <chrono>
 #include <utility> // make_pair
 #include <fcntl.h>
 #include <stdio.h>
@@ -29,6 +30,8 @@
 #include <unistd.h>
 
 namespace FW {
+
+  using namespace std::chrono_literals;
 
   typedef std::string String;
   typedef unsigned long WatchId;
@@ -52,7 +55,7 @@ namespace FW {
 
   class FileWatcher {
   public:
-    FileWatcher ();
+    FileWatcher (std::chrono::milliseconds update_delay = 500ms);
     virtual ~FileWatcher ();
 
     WatchId add_watch (const String& directory, const Callback& callback);
@@ -68,6 +71,9 @@ namespace FW {
     void handle_action(WatchId, const String& filename, unsigned long action);
 
     WatchMap m_watches;
+
+    std::chrono::milliseconds m_update_delay{500ms};
+    std::chrono::time_point<std::chrono::system_clock> m_prev_update;
 
     // Inotify file descriptor
     int m_fd;
