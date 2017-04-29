@@ -29,6 +29,8 @@
 #include <sys/inotify.h>
 #include <unistd.h>
 
+#include <boost/filesystem.hpp>
+
 namespace FW {
 
   using namespace std::chrono_literals;
@@ -49,6 +51,8 @@ namespace FW {
   struct WatchStruct {
     Callback callback;
     String dir_name;
+    WatchId id;
+    bool recursive;
   };
 
   typedef std::map<WatchId, WatchStruct> WatchMap;
@@ -58,7 +62,7 @@ namespace FW {
     FileWatcher ();
     virtual ~FileWatcher ();
 
-    WatchId add_watch (const String& directory, const Callback& callback);
+    WatchId add_watch (const String& directory, bool recursive, const Callback& callback);
 
     void remove_watch (const String& directory);
 
@@ -68,7 +72,8 @@ namespace FW {
 
   private:
 
-    void handle_action(WatchId, const String& filename, unsigned long action);
+    void handle_action (WatchId, const String& filename, unsigned long action);
+    void remove_subwatches (const String& root_dir);
 
     WatchMap m_watches;
 

@@ -21,7 +21,7 @@ namespace FW {
     close (m_fd);
   }
 
-  WatchId FileWatcher::add_watch(const String &directory, const Callback &callback) {
+  WatchId FileWatcher::add_watch(const String &directory, bool recursive, const Callback &callback) {
     int wd = inotify_add_watch(m_fd, directory.c_str(),
                                IN_CLOSE_WRITE | IN_MOVED_TO | IN_CREATE |
                                    IN_MOVED_FROM | IN_DELETE);
@@ -32,7 +32,22 @@ namespace FW {
         perror("Directory");
     }
 
-    m_watches.insert( {wd, {callback, directory}} );
+    namespace fs = boost::filesystem;
+    if (recursive) {
+      for (fs::directory_iterator it(directory), end; it != end; ++it) {
+        if (!fs::is_directory(it->path())) continue;
+
+        add_watch (it->path().string(), true, callback);
+      }
+    }
+
+    WatchStruct watch;
+    watch.callback = callback;
+    watch.dir_name = directory;
+    watch.id = wd;
+    watch.recursive = recursive;
+
+    m_watches.insert( {wd, watch} );
     return wd;
   }
 
@@ -52,9 +67,23 @@ namespace FW {
     if (iter == m_watches.end())
       return;
 
+    if (iter->second.recursive) {
+        remove_subwatches(iter->second.dir_name);
+    }
+
     inotify_rm_watch(m_fd, iter->first);
 
     m_watches.erase(iter);
+  }
+
+  void FileWatcher::remove_subwatches (const String& root_dir) {
+    namespace fs = boost::filesystem;
+    for (fs::recursive_directory_iterator it(root_dir), end; it != end; ++it) {
+      if (!fs::is_directory(it->path())) continue;
+
+      remove_subwatches(it->path().string());
+      remove_watch(it->path().string());
+    }
   }
 
   void FileWatcher::update () {
@@ -64,7 +93,7 @@ namespace FW {
           return;
     }
 
-    static char buffer[BUF_LEN];
+    char buffer[BUF_LEN];
 
     int length = read(m_fd, buffer, BUF_LEN);
     int i = 0;
@@ -100,10 +129,25 @@ namespace FW {
       iter->second.callback(watch_id, iter->second.dir_name, filename, Action::Modified);
     }
     if (IN_MOVED_TO & action || IN_CREATE & action) {
+
+      // Add directory to watch if recursive
+      namespace fs = boost::filesystem;
+      auto fullpath = fs::path(iter->second.dir_name) / fs::path(filename);
+      if (fs::is_directory(fullpath) && iter->second.recursive) {
+        add_watch (fullpath.string(), true, iter->second.callback);
+      }
+
       iter->second.callback(watch_id, iter->second.dir_name, filename, Action::Add);
     }
     if (IN_MOVED_FROM & action || IN_DELETE & action) {
       iter->second.callback(watch_id, iter->second.dir_name, filename, Action::Delete);
+
+      // Remove watch if directory
+      namespace fs = boost::filesystem;
+      auto fullpath = fs::path(iter->second.dir_name) / fs::path(filename);
+      if (fs::is_directory(fullpath)) {
+        remove_watch (iter->second.id);
+      }
     }
   }
 

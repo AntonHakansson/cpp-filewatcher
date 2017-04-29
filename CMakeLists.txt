@@ -20,3 +20,11 @@ include_directories(src)
 add_library(${PROJECT_NAME}
   src/FileWatcher.cpp
 )
+
+# Set location for library installation
+install(TARGETS ${PROJECT_NAME} DESTINATION /usr/lib)
+
+# Link to boost libraries
+find_package(Boost REQUIRED COMPONENTS system filesystem)
+target_link_libraries(${PROJECT_NAME} ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY})
+add_definitions(-DBOOST_LOG_DYN_LINK)

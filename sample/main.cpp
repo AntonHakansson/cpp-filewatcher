@@ -29,7 +29,8 @@ void callback(FW::WatchId watch_id, std::string dir, std::string filename, FW::A
 int main() {
 
   FW::FileWatcher filewatcher;
-  filewatcher.add_watch("./dir", callback);
+  filewatcher.add_watch("./dir", true, callback);
+  filewatcher.remove_watch("./dir/1/2");
 
   while (true) {
     filewatcher.update();
