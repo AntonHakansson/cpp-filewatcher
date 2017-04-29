@@ -1,4 +1,4 @@
-#include <FileWatcher.hpp>
+#include <FileWatcher/FileWatcher.hpp>
 
 namespace FW {
   FileWatcher::FileWatcher () {
