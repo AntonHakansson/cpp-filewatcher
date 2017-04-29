@@ -23,6 +23,7 @@ add_library(${PROJECT_NAME}
 
 # Set location for library installation
 install(TARGETS ${PROJECT_NAME} DESTINATION /usr/lib)
+install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/FileWatcher DESTINATION /usr/include)
 
 # Link to boost libraries
 find_package(Boost REQUIRED COMPONENTS system filesystem)
